@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.env
+.env.*
+.venv/
+venv/
+*.zip
+.DS_Store
+.pytest_cache/
+.databricks/
+*.parquet
+*.db
+*.sqlite
+*.pt
+*.bin

@@ -1,0 +1,39 @@
+resources:
+  jobs:
+    market_research_pipeline:
+      name: market-research-pipeline
+      description: >
+        Ingests market data and news from Massive, computes technical features
+        and news/price signals in Spark, embeds article chunks, and serves the
+        results to both Delta and Lakebase.
+
+      schedule:
+        # Weekdays at 18:30 UTC, after the US close
+        quartz_cron_expression: "0 30 18 ? * MON-FRI *"
+        timezone_id: UTC
+        pause_status: UNPAUSED
+
+      tasks:
+        - task_key: market_pipeline
+          notebook_task:
+            notebook_path: ../market_pipeline.py
+            base_parameters:
+              catalog: main
+              schema: market_research
+              lookback_days: "90"
+              news_limit: "10"
+              max_requests_per_minute: "5"
+              embedding_model: sentence-transformers/all-MiniLM-L6-v2
+              move_threshold: "0.03"
+          job_cluster_key: pipeline_cluster
+
+      job_clusters:
+        - job_cluster_key: pipeline_cluster
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: i3.xlarge
+            num_workers: 2
+            data_security_mode: SINGLE_USER
+
+      email_notifications:
+        on_failure: []

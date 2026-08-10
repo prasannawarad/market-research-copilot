@@ -1,0 +1,20 @@
+command:
+  - "python"
+  - "research_mcp_server.py"
+
+resources:
+  - name: requirements
+    source:
+      path: ./requirements.txt
+
+env:
+  - name: LAKEBASE_SECRET_SCOPE
+    value: "database"
+  - name: LAKEBASE_SECRET_KEY
+    value: "lakebase-url"
+  - name: MASSIVE_SECRET_SCOPE
+    value: "massive"
+  - name: MASSIVE_SECRET_KEY
+    value: "api-key"
+  - name: EMBEDDING_MODEL
+    value: "sentence-transformers/all-MiniLM-L6-v2"

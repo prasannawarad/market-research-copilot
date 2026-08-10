@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Market Research Copilot</title>
+<style>
+:root{
+  --ink:#131a24; --soft:#4b5661; --muted:#7b858f;
+  --paper:#fbfbf9; --surface:#fff; --rule:#e4e4dd;
+  --up:#2e7a55; --down:#b4362c; --flat:#7b858f; --accent:#1d6fe0;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:0 20px 80px;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.shell{max-width:1040px;margin:0 auto}
+.mast{display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+  padding:26px 0 12px;border-bottom:1px solid var(--ink);flex-wrap:wrap}
+.wordmark{font-family:var(--mono);font-size:13px;letter-spacing:.16em;
+  text-transform:uppercase;font-weight:600}
+.who{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.strip{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--rule)}
+.strip div{padding:14px 0}
+.strip div+div{border-left:1px solid #efefe9;padding-left:14px}
+.strip .n{font-family:var(--mono);font-size:22px;font-variant-numeric:tabular-nums}
+.strip .k{font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);margin-top:4px}
+.tabs{display:flex;gap:4px;padding:14px 0;flex-wrap:wrap}
+.tab{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  padding:6px 12px;border:1px solid var(--rule);border-radius:2px;background:var(--surface);
+  color:var(--soft);cursor:pointer}
+.tab.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:2px;
+  padding:18px 20px;margin-bottom:14px}
+h2{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 14px;font-weight:600}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select,textarea{font-family:var(--sans);font-size:14px;color:var(--ink);
+  background:var(--paper);border:1px solid var(--rule);border-radius:2px;padding:9px 10px}
+input,textarea{flex:1 1 200px}
+textarea{width:100%;min-height:70px;resize:vertical;font-family:var(--sans)}
+button{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  padding:9px 15px;border:1px solid var(--ink);border-radius:2px;background:var(--ink);
+  color:var(--paper);cursor:pointer}
+button.ghost{background:transparent;color:var(--soft);border-color:var(--rule)}
+button.x{background:transparent;color:var(--down);border-color:var(--rule);padding:4px 9px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);text-align:left;padding:8px 10px 8px 0;border-bottom:1px solid var(--rule);
+  font-weight:600}
+td{padding:10px 10px 10px 0;border-bottom:1px solid #f2f2ec;vertical-align:top}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;
+  padding-right:0}
+.sym{font-family:var(--mono);font-weight:600;cursor:pointer}
+.sym:hover{color:var(--accent)}
+.up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--flat)}
+.tag{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  padding:2px 7px;border-radius:2px;border:1px solid currentColor}
+.tag.strong{color:var(--down)} .tag.material{color:#b4670c} .tag.routine{color:var(--muted)}
+.tag.positive{color:var(--up)} .tag.negative{color:var(--down)} .tag.neutral{color:var(--muted)}
+.tag.agent{color:var(--accent)} .tag.human{color:var(--muted)}
+.hit{border-left:3px solid var(--rule);padding:10px 0 10px 14px;margin-bottom:12px}
+.hit .meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:5px}
+.hit .txt{font-size:14px;color:var(--soft)}
+.hit a{color:var(--accent);text-decoration:none}
+.note{border-left:3px solid var(--rule);padding:8px 0 8px 14px;margin-bottom:10px}
+.note .meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px}
+.empty,.err{font-family:var(--mono);font-size:12px;color:var(--muted);padding:18px 0}
+.err{color:var(--down)}
+.hide{display:none}
+@media(max-width:760px){.strip{grid-template-columns:repeat(3,1fr)}
+  .strip div:nth-child(4){border-left:none;padding-left:0}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<header class="mast">
+  <span class="wordmark">Market Research Copilot</span>
+  <span class="who">{{ user }} &middot; lakebase + spark + agent</span>
+</header>
+
+<section class="strip" id="strip">
+  <div><div class="n" id="s-bars">&ndash;</div><div class="k">Price bars</div></div>
+  <div><div class="n" id="s-metrics">&ndash;</div><div class="k">Metrics</div></div>
+  <div><div class="n" id="s-articles">&ndash;</div><div class="k">Articles</div></div>
+  <div><div class="n" id="s-chunks">&ndash;</div><div class="k">Vectors</div></div>
+  <div><div class="n" id="s-signals">&ndash;</div><div class="k">Signals</div></div>
+  <div><div class="n" id="s-latest" style="font-size:14px">&ndash;</div><div class="k">Latest bar</div></div>
+</section>
+
+<nav class="tabs">
+  <button class="tab on" data-view="watchlist">Watchlist</button>
+  <button class="tab" data-view="search">Semantic search</button>
+  <button class="tab" data-view="signals">News signals</button>
+  <button class="tab" data-view="notes">Research notes</button>
+  <button class="tab" data-view="reports">Agent reports</button>
+</nav>
+
+<!-- Watchlist -->
+<div id="v-watchlist">
+  <div class="panel">
+    <h2>Add ticker</h2>
+    <div class="row">
+      <input id="new-symbol" placeholder="AAPL" maxlength="10" autocomplete="off">
+      <button onclick="addSymbol()">Add to watchlist</button>
+    </div>
+    <div id="wl-err" class="err hide"></div>
+  </div>
+  <div class="panel">
+    <h2>Watchlist &mdash; metrics from the Spark pipeline</h2>
+    <div id="wl-body"><div class="empty">Loading&hellip;</div></div>
+  </div>
+  <div class="panel hide" id="detail-panel">
+    <h2 id="detail-title">Detail</h2>
+    <div id="detail-body"></div>
+  </div>
+</div>
+
+<!-- Semantic search -->
+<div id="v-search" class="hide">
+  <div class="panel">
+    <h2>Search news by meaning (pgvector cosine similarity)</h2>
+    <div class="row">
+      <input id="q" placeholder="e.g. supply chain pressure from tariffs">
+      <input id="q-ticker" placeholder="Ticker (optional)" style="flex:0 0 160px" maxlength="10">
+      <button onclick="runSearch()">Search</button>
+    </div>
+    <div id="q-err" class="err hide"></div>
+  </div>
+  <div class="panel">
+    <h2>Results</h2>
+    <div id="q-body"><div class="empty">Run a search to see matching passages.</div></div>
+  </div>
+</div>
+
+<!-- Signals -->
+<div id="v-signals" class="hide">
+  <div class="panel">
+    <h2>Headlines joined to same-day price moves</h2>
+    <div class="row" style="margin-bottom:12px">
+      <input id="sig-ticker" placeholder="Filter by ticker (optional)" style="flex:0 0 220px" maxlength="10">
+      <button class="ghost" onclick="loadSignals()">Apply</button>
+    </div>
+    <div id="sig-body"><div class="empty">Loading&hellip;</div></div>
+  </div>
+</div>
+
+<!-- Notes -->
+<div id="v-notes" class="hide">
+  <div class="panel">
+    <h2>Save a research note</h2>
+    <div class="row" style="margin-bottom:8px">
+      <input id="note-ticker" placeholder="Ticker" style="flex:0 0 160px" maxlength="10">
+    </div>
+    <textarea id="note-text" placeholder="Thesis, risk, or conclusion worth keeping"></textarea>
+    <div class="row" style="margin-top:8px"><button onclick="saveNote()">Save note</button></div>
+    <div id="note-err" class="err hide"></div>
+  </div>
+  <div class="panel">
+    <h2>Notes &mdash; yours and the agent's</h2>
+    <div id="notes-body"><div class="empty">Loading&hellip;</div></div>
+  </div>
+</div>
+
+<!-- Reports -->
+<div id="v-reports" class="hide">
+  <div class="panel">
+    <h2>Analyses the agent wrote back to Lakebase</h2>
+    <div id="rep-body"><div class="empty">Loading&hellip;</div></div>
+  </div>
+</div>
+
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const pct = v => v == null ? '&ndash;' : (v*100).toFixed(2) + '%';
+const num = (v,d=2) => v == null ? '&ndash;' : Number(v).toFixed(d);
+const esc = s => (s ?? '').toString().replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const cls = v => v == null ? 'flat' : (v > 0 ? 'up' : v < 0 ? 'down' : 'flat');
+
+async function api(url, opts) {
+  const r = await fetch(url, opts);
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || ('Request failed: ' + r.status));
+  return body;
+}
+function showErr(id, msg) {
+  const el = $(id); el.textContent = msg; el.classList.remove('hide');
+  setTimeout(() => el.classList.add('hide'), 6000);
+}
+
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+  t.classList.add('on');
+  ['watchlist','search','signals','notes','reports'].forEach(v =>
+    $('#v-' + v).classList.toggle('hide', v !== t.dataset.view));
+  if (t.dataset.view === 'signals') loadSignals();
+  if (t.dataset.view === 'notes') loadNotes();
+  if (t.dataset.view === 'reports') loadReports();
+});
+
+async function loadStats() {
+  try {
+    const s = await api('/api/stats');
+    $('#s-bars').textContent = s.bars ?? 0;
+    $('#s-metrics').textContent = s.metrics ?? 0;
+    $('#s-articles').textContent = s.articles ?? 0;
+    $('#s-chunks').textContent = s.chunks ?? 0;
+    $('#s-signals').textContent = s.signals ?? 0;
+    $('#s-latest').textContent = s.latest_bar ? String(s.latest_bar).slice(0,10) : '—';
+  } catch (e) { console.error(e); }
+}
+
+async function loadWatchlist() {
+  try {
+    const rows = await api('/api/watchlist');
+    if (!rows.length) {
+      $('#wl-body').innerHTML = '<div class="empty">No tickers yet. Add one above, then run the Spark pipeline.</div>';
+      return;
+    }
+    $('#wl-body').innerHTML = `<table><thead><tr>
+      <th>Symbol</th><th>Trend</th><th class="num">Close</th><th class="num">Day</th>
+      <th class="num">Vol 20d</th><th class="num">Drawdown</th><th class="num">As of</th><th></th>
+      </tr></thead><tbody>` + rows.map(r => `<tr>
+        <td class="sym" onclick="showDetail('${esc(r.symbol)}')">${esc(r.symbol)}</td>
+        <td><span class="tag ${r.trend === 'up' ? 'positive' : r.trend === 'down' ? 'negative' : 'neutral'}">${esc(r.trend || 'n/a')}</span></td>
+        <td class="num">${r.close != null ? num(r.close) : (r.latest_price != null ? num(r.latest_price) : '&ndash;')}</td>
+        <td class="num ${cls(r.daily_return)}">${pct(r.daily_return)}</td>
+        <td class="num">${pct(r.volatility_20d)}</td>
+        <td class="num ${cls(r.drawdown_from_high)}">${pct(r.drawdown_from_high)}</td>
+        <td class="num" style="color:var(--muted);font-size:12px">${r.bar_date ? String(r.bar_date).slice(0,10) : '&ndash;'}</td>
+        <td class="num"><button class="x" onclick="removeSymbol('${esc(r.symbol)}')">Remove</button></td>
+      </tr>`).join('') + '</tbody></table>';
+  } catch (e) { $('#wl-body').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+async function addSymbol() {
+  const symbol = $('#new-symbol').value.trim().toUpperCase();
+  if (!symbol) return showErr('#wl-err', 'Enter a ticker symbol.');
+  try {
+    await api('/api/watchlist', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({symbol})});
+    $('#new-symbol').value = '';
+    loadWatchlist();
+  } catch (e) { showErr('#wl-err', e.message); }
+}
+
+async function removeSymbol(symbol) {
+  if (!confirm('Remove ' + symbol + ' from the watchlist?')) return;
+  try { await api('/api/watchlist/' + symbol, {method:'DELETE'}); loadWatchlist(); }
+  catch (e) { showErr('#wl-err', e.message); }
+}
+
+async function showDetail(ticker) {
+  $('#detail-panel').classList.remove('hide');
+  $('#detail-title').textContent = ticker + ' — last 20 sessions';
+  $('#detail-body').innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const rows = await api('/api/metrics/' + ticker + '?days=20');
+    if (!rows.length) { $('#detail-body').innerHTML = '<div class="empty">No metrics yet — run the pipeline.</div>'; return; }
+    $('#detail-body').innerHTML = `<table><thead><tr>
+      <th>Date</th><th class="num">Close</th><th class="num">Return</th><th class="num">MA5</th>
+      <th class="num">MA20</th><th class="num">Vol 20d</th><th class="num">Vol z</th><th>Trend</th>
+      </tr></thead><tbody>` + rows.map(r => `<tr>
+        <td>${String(r.bar_date).slice(0,10)}</td>
+        <td class="num">${num(r.close)}</td>
+        <td class="num ${cls(r.daily_return)}">${pct(r.daily_return)}</td>
+        <td class="num">${num(r.ma_5)}</td><td class="num">${num(r.ma_20)}</td>
+        <td class="num">${pct(r.volatility_20d)}</td>
+        <td class="num">${num(r.volume_zscore_20d)}</td>
+        <td><span class="tag ${r.trend === 'up' ? 'positive' : r.trend === 'down' ? 'negative' : 'neutral'}">${esc(r.trend || '')}</span></td>
+      </tr>`).join('') + '</tbody></table>';
+  } catch (e) { $('#detail-body').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+async function runSearch() {
+  const query = $('#q').value.trim(), ticker = $('#q-ticker').value.trim();
+  if (!query) return showErr('#q-err', 'Enter a search query.');
+  $('#q-body').innerHTML = '<div class="empty">Embedding query and searching…</div>';
+  try {
+    const rows = await api('/api/search', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({query, ticker})});
+    if (!rows.length) { $('#q-body').innerHTML = '<div class="empty">No matches. Run the pipeline to populate embeddings.</div>'; return; }
+    $('#q-body').innerHTML = rows.map(r => `<div class="hit">
+      <div class="meta">${esc(r.ticker)} &middot; similarity ${num(r.similarity,3)}
+        ${r.sentiment ? '&middot; <span class="tag ' + esc(r.sentiment) + '">' + esc(r.sentiment) + '</span>' : ''}
+        ${r.published_utc ? '&middot; ' + String(r.published_utc).slice(0,10) : ''}</div>
+      <div><strong>${r.article_url ? `<a href="${esc(r.article_url)}" target="_blank" rel="noopener">${esc(r.title)}</a>` : esc(r.title)}</strong></div>
+      <div class="txt">${esc((r.chunk_text || '').slice(0,420))}…</div>
+    </div>`).join('');
+  } catch (e) { $('#q-body').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+async function loadSignals() {
+  const t = $('#sig-ticker').value.trim();
+  $('#sig-body').innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const rows = await api('/api/signals' + (t ? '?ticker=' + encodeURIComponent(t) : ''));
+    if (!rows.length) { $('#sig-body').innerHTML = '<div class="empty">No signals yet — run the pipeline.</div>'; return; }
+    $('#sig-body').innerHTML = `<table><thead><tr>
+      <th>Ticker</th><th>Date</th><th>Headline</th><th class="num">Move</th>
+      <th class="num">Vol z</th><th>Signal</th></tr></thead><tbody>` + rows.map(r => `<tr>
+        <td class="sym">${esc(r.ticker)}</td>
+        <td style="font-family:var(--mono);font-size:12px">${String(r.bar_date).slice(0,10)}</td>
+        <td>${esc(r.title)}</td>
+        <td class="num ${cls(r.daily_return)}">${pct(r.daily_return)}</td>
+        <td class="num">${num(r.volume_zscore_20d)}</td>
+        <td><span class="tag ${esc(r.signal_strength)}">${esc(r.signal_strength)}</span></td>
+      </tr>`).join('') + '</tbody></table>';
+  } catch (e) { $('#sig-body').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+async function loadNotes() {
+  try {
+    const rows = await api('/api/notes');
+    if (!rows.length) { $('#notes-body').innerHTML = '<div class="empty">No notes yet.</div>'; return; }
+    $('#notes-body').innerHTML = rows.map(r => `<div class="note">
+      <div class="meta"><strong>${esc(r.ticker)}</strong> &middot;
+        <span class="tag ${esc(r.author)}">${esc(r.author)}</span> &middot;
+        ${String(r.created_at).slice(0,16).replace('T',' ')}
+        &middot; <a href="#" onclick="delNote(${r.note_id});return false" style="color:var(--down)">delete</a></div>
+      <div>${esc(r.note_text)}</div></div>`).join('');
+  } catch (e) { $('#notes-body').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+async function saveNote() {
+  const ticker = $('#note-ticker').value.trim(), note_text = $('#note-text').value.trim();
+  if (!ticker) return showErr('#note-err', 'Pick a ticker for this note.');
+  if (!note_text) return showErr('#note-err', 'Write something before saving.');
+  try {
+    await api('/api/notes', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ticker, note_text})});
+    $('#note-text').value = '';
+    loadNotes();
+  } catch (e) { showErr('#note-err', e.message); }
+}
+
+async function delNote(id) {
+  if (!confirm('Delete this note?')) return;
+  try { await api('/api/notes/' + id, {method:'DELETE'}); loadNotes(); }
+  catch (e) { showErr('#note-err', e.message); }
+}
+
+async function loadReports() {
+  try {
+    const rows = await api('/api/reports');
+    if (!rows.length) { $('#rep-body').innerHTML = '<div class="empty">No agent analyses saved yet. Ask the agent a question and have it call save_analysis_report.</div>'; return; }
+    $('#rep-body').innerHTML = rows.map(r => `<div class="note">
+      <div class="meta"><strong>${esc(r.ticker)}</strong> &middot; ${esc(r.model_name || 'agent')} &middot;
+        ${String(r.created_at).slice(0,16).replace('T',' ')}</div>
+      <div style="margin-bottom:6px"><strong>${esc(r.question)}</strong></div>
+      <div style="color:var(--soft)">${esc(r.answer)}</div>
+      ${Array.isArray(r.citations) && r.citations.length
+        ? '<div class="meta" style="margin-top:6px">' + r.citations.map(c => esc(String(c))).join(' &middot; ') + '</div>' : ''}
+    </div>`).join('');
+  } catch (e) { $('#rep-body').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+$('#new-symbol').addEventListener('keydown', e => { if (e.key === 'Enter') addSymbol(); });
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+
+loadStats();
+loadWatchlist();
+</script>
+</body>
+</html>
