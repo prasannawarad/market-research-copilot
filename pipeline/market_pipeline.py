@@ -23,8 +23,14 @@
 # COMMAND ----------
 
 # DBTITLE 1,Install dependencies
-# MAGIC %pip uninstall -y psycopg2 psycopg2-binary
-# MAGIC %pip install -q 'databricks-sdk>=0.118.0' psycopg2-binary sentence-transformers trafilatura requests pandas
+# MAGIC %pip install -q \
+# MAGIC   'protobuf>=5.26.1,<6' \
+# MAGIC   'psycopg2-binary' \
+# MAGIC   'sentence-transformers' \
+# MAGIC   'trafilatura' \
+# MAGIC   'requests' \
+# MAGIC   'pandas'
+# MAGIC
 
 # COMMAND ----------
 
@@ -67,13 +73,11 @@ import json
 import time
 from datetime import date, datetime, timedelta, timezone
 
-import psycopg2
 import requests
-from psycopg2.extras import execute_values
 
 
 def _secret(scope: str, key: str) -> str:
-    return base64.b64decode(dbutils.secrets.get(scope=scope, key=key)).decode("utf-8")
+    return dbutils.secrets.get(scope=scope, key=key)
 
 
 LAKEBASE_URL = _secret("database", "lakebase-url")
@@ -86,7 +90,7 @@ def lakebase_read(query: str):
     from urllib.parse import urlparse
 
     u = urlparse(LAKEBASE_URL)
-    jdbc = f"jdbc:postgresql://{u.hostname}:{u.port or 5432}{u.path}?sslmode=require"
+    jdbc = f"jdbc:postgresql://{u.hostname}:{u.port or 5432}{u.path}?sslmode=require&connectTimeout=30"
     return (
         spark.read.format("jdbc")
         .option("url", jdbc)
@@ -202,6 +206,7 @@ print(f"ingested {len(bar_rows)} bars, {len(news_rows)} articles")
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 11
 from pyspark.sql import Window
 from pyspark.sql import functions as F
 from pyspark.sql.types import (ArrayType, DateType, DoubleType, FloatType,
@@ -220,8 +225,8 @@ bars_schema = StructType([
 ])
 
 bars = spark.createDataFrame(bar_rows, schema=bars_schema).dropDuplicates(["ticker", "bar_date"])
-bars = bars.repartition(8, "ticker").cache()
-print(f"bars partitions: {bars.rdd.getNumPartitions()}  rows: {bars.count()}")
+bars = bars.repartition(8, "ticker")
+print(f"bars rows: {bars.count()}")
 
 (bars.write.mode("overwrite").format("delta")
      .partitionBy("ticker")
@@ -258,7 +263,6 @@ metrics = (
                  .otherwise(F.lit("flat")))
     .select("ticker", "bar_date", "close", "daily_return", "ma_5", "ma_20",
             "volatility_20d", "volume_zscore_20d", "drawdown_from_high", "trend")
-    .cache()
 )
 
 (metrics.write.mode("overwrite").format("delta")
@@ -273,6 +277,7 @@ display(metrics.orderBy(F.col("bar_date").desc()).limit(10))
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 13
 news_schema = StructType([
     StructField("id", StringType()),
     StructField("ticker", StringType()),
@@ -294,7 +299,6 @@ news = (
     .dropDuplicates(["id"])
     .withColumn("published_ts", F.to_timestamp("published_utc"))
     .withColumn("bar_date", F.to_date("published_ts"))
-    .cache()
 )
 print(f"articles: {news.count()}")
 
@@ -322,7 +326,6 @@ signals = (
         F.col("m.volume_zscore_20d").alias("volume_zscore_20d"),
         F.col("signal_strength"),
     )
-    .cache()
 )
 
 (signals.write.mode("overwrite").format("delta")
@@ -341,6 +344,43 @@ display(signals.orderBy(F.col("abs_return").desc()).limit(10))
 
 # COMMAND ----------
 
+# DBTITLE 1,Stage model to Unity Catalog Volume
+# Stage model to Unity Catalog Volume (driver-side, once)
+import os
+
+VOLUME = f"{CATALOG}.{SCHEMA}.models"
+MODEL_DIR = f"/Volumes/{CATALOG}/{SCHEMA}/models/minilm-l6-v2"
+
+# Create volume
+spark.sql(f"CREATE VOLUME IF NOT EXISTS {VOLUME}")
+
+# Set up driver-side cache with XET disabled
+os.environ["HF_HOME"] = "/tmp/hf"
+os.environ["HF_HUB_CACHE"] = "/tmp/hf/hub"
+os.environ["HF_HUB_DISABLE_XET"] = "1"
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+os.makedirs("/tmp/hf/hub", exist_ok=True)
+
+# Stage model if not already present
+try:
+    dbutils.fs.ls(MODEL_DIR)
+    print(f"Model already staged at {MODEL_DIR}")
+except:
+    print(f"Staging model to {MODEL_DIR}...")
+    from sentence_transformers import SentenceTransformer
+    
+    # Download and save directly to Volume (FUSE-mounted path)
+    model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", cache_folder="/tmp/hf")
+    model.save(MODEL_DIR)
+    print(f"Model staged successfully")
+
+# Verify
+files = dbutils.fs.ls(MODEL_DIR)
+print(f"Model files: {[f.name for f in files]}")
+
+# COMMAND ----------
+
+# DBTITLE 1,Cell 15
 import pandas as pd
 from pyspark.sql.functions import pandas_udf
 
@@ -386,9 +426,18 @@ _model = {}
 
 @pandas_udf(ArrayType(FloatType()))
 def embed(texts: pd.Series) -> pd.Series:
+    import os
+    os.environ["HF_HUB_OFFLINE"] = "1"
+    os.environ["TRANSFORMERS_OFFLINE"] = "1"
+    os.environ["HF_HOME"] = "/tmp/hf"
+    os.environ["HF_HUB_DISABLE_XET"] = "1"
+    
     from sentence_transformers import SentenceTransformer
+    import pandas as pd
+    
     if "m" not in _model:
-        _model["m"] = SentenceTransformer(EMBEDDING_MODEL_NAME)
+        _model["m"] = SentenceTransformer(MODEL_DIR)
+    
     vectors = _model["m"].encode(
         texts.fillna("").tolist(), batch_size=32, show_progress_bar=False, normalize_embeddings=True
     )
@@ -401,13 +450,15 @@ chunk_embeddings = (
     .withColumn("id", F.concat_ws(":", F.col("id"), F.col("chunk_index")))
     .withColumnRenamed("id", "chunk_id")
     .withColumn("model_name", F.lit(EMBEDDING_MODEL_NAME))
-    .cache()
 )
 
-print(f"chunks embedded: {chunk_embeddings.count()}")
-
+# Write to Delta first
 (chunk_embeddings.write.mode("overwrite").format("delta")
                  .saveAsTable(f"{CATALOG}.{SCHEMA}.ticker_news_chunk_embeddings"))
+
+# Count from completed table
+chunk_count = spark.table(f"{CATALOG}.{SCHEMA}.ticker_news_chunk_embeddings").count()
+print(f"chunks embedded: {chunk_count}")
 
 # COMMAND ----------
 
@@ -419,105 +470,79 @@ print(f"chunks embedded: {chunk_embeddings.count()}")
 
 # COMMAND ----------
 
-def upsert_partition(sql: str):
-    """Build a foreachPartition function that upserts rows with the given SQL."""
+# DBTITLE 1,Cell 17
+# Read embeddings from completed Delta table
+chunk_embeddings = spark.table(f"{CATALOG}.{SCHEMA}.ticker_news_chunk_embeddings")
 
-    def _run(rows):
-        buf = [tuple(r) for r in rows]
-        if not buf:
-            return
-        conn = psycopg2.connect(LAKEBASE_URL)
-        try:
-            with conn.cursor() as cur:
-                execute_values(cur, sql, buf, page_size=500)
-            conn.commit()
-        finally:
-            conn.close()
+from urllib.parse import urlparse
 
-    return _run
+# Parse Lakebase URL for JDBC
+u = urlparse(LAKEBASE_URL)
+jdbc_url = f"jdbc:postgresql://{u.hostname}:{u.port or 5432}{u.path}?sslmode=require&connectTimeout=30"
 
+# JDBC write helper - Serverless-compatible
+def write_to_lakebase_jdbc(df, table_name):
+    """Write DataFrame to Lakebase via JDBC from driver."""
+    row_count = df.count()
+    
+    (df.write.format("jdbc")
+        .option("url", jdbc_url)
+        .option("dbtable", table_name)
+        .option("user", u.username)
+        .option("password", u.password)
+        .option("driver", "org.postgresql.Driver")
+        .mode("append")
+        .save())
+    
+    print(f"{table_name}: {row_count} rows written")
+    return row_count
 
-PRICE_SQL = """
-INSERT INTO price_bars (ticker, bar_date, open, high, low, close, volume, vwap)
-VALUES %s
-ON CONFLICT (ticker, bar_date) DO UPDATE SET
-  open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low,
-  close = EXCLUDED.close, volume = EXCLUDED.volume, vwap = EXCLUDED.vwap,
-  ingested_at = now()
-"""
+# 1. Bars
+write_to_lakebase_jdbc(
+    bars.select("ticker", "bar_date", "open", "high", "low", "close", "volume", "vwap"),
+    "price_bars"
+)
 
-METRICS_SQL = """
-INSERT INTO ticker_metrics (ticker, bar_date, close, daily_return, ma_5, ma_20,
-                            volatility_20d, volume_zscore_20d, drawdown_from_high, trend)
-VALUES %s
-ON CONFLICT (ticker, bar_date) DO UPDATE SET
-  close = EXCLUDED.close, daily_return = EXCLUDED.daily_return,
-  ma_5 = EXCLUDED.ma_5, ma_20 = EXCLUDED.ma_20,
-  volatility_20d = EXCLUDED.volatility_20d,
-  volume_zscore_20d = EXCLUDED.volume_zscore_20d,
-  drawdown_from_high = EXCLUDED.drawdown_from_high,
-  trend = EXCLUDED.trend, computed_at = now()
-"""
+# 2. Metrics  
+write_to_lakebase_jdbc(
+    metrics.select("ticker", "bar_date", "close", "daily_return", "ma_5", "ma_20",
+                   "volatility_20d", "volume_zscore_20d", "drawdown_from_high", "trend"),
+    "ticker_metrics"
+)
 
-NEWS_SQL = """
-INSERT INTO ticker_news_documents (id, ticker, title, description, author, article_url,
-                                   publisher_name, keywords, sentiment, sentiment_reasoning,
-                                   published_utc, payload)
-VALUES %s
-ON CONFLICT (id) DO UPDATE SET
-  title = EXCLUDED.title, description = EXCLUDED.description,
-  sentiment = EXCLUDED.sentiment, synced_at = now()
-"""
+# 3. News
+write_to_lakebase_jdbc(
+    news.select("id", "ticker", "title", "description", "author", "article_url",
+                "publisher_name", "keywords", "sentiment", "sentiment_reasoning",
+                "published_utc", "payload"),
+    "ticker_news_documents"
+)
 
-SIGNALS_SQL = """
-INSERT INTO news_price_signals (article_id, ticker, bar_date, title, sentiment,
-                                daily_return, abs_return, volume_zscore_20d, signal_strength)
-VALUES %s
-ON CONFLICT (article_id, bar_date) DO UPDATE SET
-  daily_return = EXCLUDED.daily_return, abs_return = EXCLUDED.abs_return,
-  signal_strength = EXCLUDED.signal_strength, computed_at = now()
-"""
+# 4. Signals
+write_to_lakebase_jdbc(signals, "news_price_signals")
 
-CHUNK_SQL = """
-INSERT INTO ticker_news_chunk_embeddings (id, article_id, ticker, chunk_index,
-                                          chunk_text, embedding, model_name)
-VALUES %s
-ON CONFLICT (id) DO UPDATE SET
-  chunk_text = EXCLUDED.chunk_text, embedding = EXCLUDED.embedding, embedded_at = now()
-"""
-
-bars.select("ticker", "bar_date", "open", "high", "low", "close", "volume", "vwap") \
-    .foreachPartition(upsert_partition(PRICE_SQL))
-
-metrics.select("ticker", "bar_date", "close", "daily_return", "ma_5", "ma_20",
-               "volatility_20d", "volume_zscore_20d", "drawdown_from_high", "trend") \
-       .foreachPartition(upsert_partition(METRICS_SQL))
-
-news.select("id", "ticker", "title", "description", "author", "article_url",
-            "publisher_name", "keywords", "sentiment", "sentiment_reasoning",
-            "published_utc", "payload") \
-    .foreachPartition(upsert_partition(NEWS_SQL))
-
-signals.foreachPartition(upsert_partition(SIGNALS_SQL))
-
-# pgvector needs the literal '[0.1,0.2,...]' form, so format the array as a string
-(chunk_embeddings
-    .select(
+# 5. Chunk embeddings - format embedding array as pgvector string
+write_to_lakebase_jdbc(
+    chunk_embeddings.select(
         F.col("chunk_id").alias("id"),
         F.regexp_replace(F.col("chunk_id"), ":[0-9]+$", "").alias("article_id"),
         "ticker", "chunk_index", "chunk_text",
         F.concat(F.lit("["), F.concat_ws(",", F.col("embedding")), F.lit("]")).alias("embedding"),
         "model_name",
-    )
-    .foreachPartition(upsert_partition(CHUNK_SQL)))
+    ),
+    "ticker_news_chunk_embeddings"
+)
 
-print("Lakebase serving tables updated")
+print("\nLakebase serving tables updated")
 
 # COMMAND ----------
 
 # MAGIC %md ## 7. Verify
 
 # COMMAND ----------
+
+# DBTITLE 1,Cell 19
+import psycopg2
 
 conn = psycopg2.connect(LAKEBASE_URL)
 with conn.cursor() as cur:
