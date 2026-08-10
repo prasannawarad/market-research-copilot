@@ -25,7 +25,7 @@ from lakebase import run_query, run_returning, run_write
 mcp = FastMCP("market-research")
 
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-DEFAULT_EMAIL = os.environ.get("DEFAULT_EMAIL", "agent@databricks.local")
+DEFAULT_EMAIL = os.environ.get("DEFAULT_EMAIL", "waradprasanna@gmail.com")
 
 _model = None
 
@@ -267,26 +267,42 @@ def save_research_note(ticker: str, note_text: str, email: str = "") -> str:
     )
     return _json({"ok": True, "note": rows[0] if rows else None})
 
-
 @mcp.tool
-def save_analysis_report(ticker: str, question: str, answer: str,
-                         citations: str = "", email: str = "") -> str:
+def save_analysis_report(
+    ticker: str,
+    question: str,
+    answer: str,
+    citations: str = "",
+    email: str = "",
+) -> str:
     """
     Persist a full analysis: the question asked, the answer given, and the
     article URLs or metrics it rests on. Pass citations as a JSON array string.
     This is a write.
+
+    The authenticated/default app user owns the report. The email argument is
+    kept for MCP compatibility but is not trusted for ownership.
     """
     try:
         cites = json.loads(citations) if citations else []
     except json.JSONDecodeError:
         cites = [citations]
+
     rows = run_returning(
-        """INSERT INTO analysis_reports (email, ticker, question, answer, citations, model_name)
+        """INSERT INTO analysis_reports
+           (email, ticker, question, answer, citations, model_name)
            VALUES (%s, %s, %s, %s, %s::jsonb, %s)
            RETURNING report_id, created_at""",
-        (email or DEFAULT_EMAIL, ticker.strip().upper(), question, answer,
-         json.dumps(cites), os.environ.get("AGENT_MODEL", "agent-bricks")),
+        (
+            DEFAULT_EMAIL,
+            ticker.strip().upper(),
+            question,
+            answer,
+            json.dumps(cites),
+            os.environ.get("AGENT_MODEL", "agent-bricks"),
+        ),
     )
+
     return _json({"ok": True, "report": rows[0] if rows else None})
 
 
