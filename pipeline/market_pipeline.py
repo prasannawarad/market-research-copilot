@@ -106,7 +106,7 @@ print("secrets loaded")
 
 # COMMAND ----------
 
-watchlist_df = lakebase_read("SELECT DISTINCT symbol FROM watchlist")
+watchlist_df = lakebase_read("SELECT DISTINCT symbol FROM watchlist WHERE symbol IN ('AAPL', 'MSFT', 'NVDA')")
 TICKERS = sorted(r["symbol"].strip().upper() for r in watchlist_df.collect())[:3]
 
 if not TICKERS:
