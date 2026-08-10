@@ -16,7 +16,7 @@ resources:
       tasks:
         - task_key: market_pipeline
           notebook_task:
-            notebook_path: ../market_pipeline.py
+            notebook_path: ../market_pipeline_serverless.py
             base_parameters:
               catalog: main
               schema: market_research

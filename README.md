@@ -17,7 +17,7 @@ frontend are new.
 ## Architecture
 
 ```
-Massive API  ──►  Spark pipeline (pipeline/market_pipeline.py)
+Massive API  ──►  Spark pipeline (pipeline/market_pipeline_serverless.py)
 (bars + news)         │
                       ├─ window functions ─► returns, MA5/MA20, 20d volatility,
                       │                      volume z-score, drawdown, trend
@@ -42,7 +42,7 @@ Massive API  ──►  Spark pipeline (pipeline/market_pipeline.py)
 
 | Requirement | Where it lives |
 |---|---|
-| Spark data pipeline | `pipeline/market_pipeline.py` — window functions, a DataFrame join, a pandas UDF, partitioned Delta writes, and a distributed `foreachPartition` upsert to Lakebase |
+| Spark data pipeline | `pipeline/market_pipeline_serverless.py` — window functions, a DataFrame join, a pandas UDF, partitioned Delta writes, and a distributed `foreachPartition` upsert to Lakebase |
 | Third-party API | Massive (daily aggregates + news); Alpaca paper trading via the Day 3 server |
 | Unstructured data | Article bodies extracted with trafilatura, chunked, embedded with all-MiniLM-L6-v2, stored in pgvector with an HNSW index |
 | Databricks App frontend | `app/` — watchlist with live metrics, semantic search, signals table, notes, agent reports |
@@ -87,7 +87,7 @@ INSERT INTO watchlist (email, symbol, updated_at) VALUES
 ON CONFLICT (email, symbol) DO NOTHING;
 ```
 
-**4. Run the pipeline** — import `pipeline/market_pipeline.py` as a notebook,
+**4. Run the pipeline** — import `pipeline/market_pipeline_serverless.py` as a notebook,
 attach a cluster (DBR 15.4+), Run All. Roughly 8–12 minutes for 5 tickers; the
 Massive free tier is 5 requests/minute, so ingest is throttled on purpose. The
 last cell prints row counts per table.
