@@ -25,7 +25,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Goal**: The current inline `<script>`/`<style>` block in `app/templates/index.html` is safely relocated into a modular `app/static/css/{tokens,layout,components}.css` and `app/static/js/{main.js,api.js,components/*.js,tabs/*.js}` structure, restyled with the modern SaaS-dashboard design tokens (typography, color, spacing, card-based layout) across the page shell and all 5 tabs, functionally identical to today, with cache-busted asset loading verified against a real deploy — establishing the foundation every subsequent phase builds on.
 **Mode:** mvp
 **Depends on**: Nothing (first phase)
-**Requirements**: STYLE-01. Also foundational for all remaining v1 requirements (STATE-01 through POLISH-02), flagged by research/SUMMARY.md as necessary before any feature work can land safely given the codebase's onclick-handler and DOM-ID contract risks (see research/PITFALLS.md #1, #2, #5)
+**Requirements**: STYLE-01
+
+*Note: this phase is also foundational for all remaining v1 requirements (STATE-01 through POLISH-02) — flagged by research/SUMMARY.md as necessary before any feature work can land safely given the codebase's onclick-handler and DOM-ID contract risks (see research/PITFALLS.md #1, #2, #5). Those requirements are delivered by their own phases (2-4), not this one.*
 **Success Criteria** (what must be TRUE):
 
   1. The live app renders with the new modern SaaS-dashboard visual design (typography scale, color palette, spacing system, card-based layout) applied consistently across the page shell and all 5 tabs — a clear visual step up from the current plain bordered-table look, while all 5 tabs, all data, and all existing content remain present and correctly labeled.
