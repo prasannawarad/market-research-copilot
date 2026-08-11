@@ -1,7 +1,7 @@
 ---
 phase: 1
 slug: static-asset-restructure-design-system-foundation
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-08-11
@@ -118,20 +118,39 @@ Existing token set (verified `index.html:8-14`) is preserved verbatim — no ren
 
 ## UI Considerations
 
-Applicable state considerations resolved: 8 covered, 2 backstop, 1 unresolved.
+Ran via the deterministic `ui-consideration-probe` engine against all 5 UI-SPEC elements (2026-08-11); 33 applicable considerations found and resolved (supersedes the initial 11-item pass). Final tally: 24 covered, 3 backstop, 1 unresolved, 5 not-applicable (dismissed).
+
+**Cross-cutting resolution rule (applied uniformly below):** STYLE-01 is a pure visual/structural restyle. Any category whose answer is "existing copy/behavior, unchanged" is `covered` by reference to the Copywriting Contract above — authoring new copy/behavior for these states is explicitly out of scope this phase (Phase 2: STATE-01 through STATE-04). Categories genuinely introduced or affected by this phase's new card/shadow/spacing containers are resolved on their visual merits.
 
 | Category | Element(s) | Status | Resolution / Reason |
 |----------|------------|--------|---------------------|
-| populated | KPI stat-tile strip (`#strip`, list-collection, fixed 6-tile set) | ✅ covered | 6-tile card grid (`--radius-md`, `--shadow-sm`) renders with Display-role mono tabular numbers; existing `–` null placeholder (pre-pipeline state) preserved unchanged |
+| populated | KPI stat-tile strip (`#strip`, fixed 6-tile set) | ✅ covered | 6-tile card grid (`--radius-md`, `--shadow-sm`) renders with Display-role mono tabular numbers; existing `–` null placeholder (pre-pipeline state) preserved unchanged |
+| empty | KPI stat-tile strip | ✅ covered | Before any pipeline run, `/api/stats` returns zero/null counts; the existing `–` placeholder convention (same one used in data tables) is preserved and simply restyled within the new card container — no copy change |
+| loading | KPI stat-tile strip | ✅ covered | No loading indicator exists for the KPI strip today; behavior unchanged this phase — adding one is Phase 2 (STATE-02) scope |
+| error | KPI stat-tile strip | ✅ covered | No `.err` handling exists for `/api/stats` failures today; behavior unchanged this phase — adding one is Phase 2 (STATE-04) scope |
+| partial | KPI stat-tile strip | ⛔ not applicable | Single atomic `/api/stats` response populates all 6 tiles together; no partial-population state exists for this element |
+| zero-one-many | KPI stat-tile strip | ⛔ not applicable | Fixed 6-tile set; tile count never varies |
 | overflow | KPI stat-tile strip labels | ✅ covered | Labels are fixed short strings (≤12 chars, e.g. "Price bars", "Latest bar"); no dynamic-length content, no truncation risk |
 | overflow | Tab navigation (`nav.tabs`) | ✅ covered | Existing `.tabs{flex-wrap:wrap}` (`index.html:30`) handles narrow viewports unchanged; 5 short fixed labels |
-| loading / error | Tab navigation (`nav.tabs`) | ✅ covered | The nav control itself performs no network call and has no failure mode of its own — tab-switch is a synchronous `.hide` class toggle; per-tab data loading/error states are owned by each tab's content panel (see next row), not the nav |
-| empty / loading / error | Data tables (Watchlist, ticker detail, Signals — list-collection) | ✅ covered | Existing empty-state copy, "Loading…" text, and `.err` message display (see Copywriting Contract) are preserved verbatim and restyled visually (card container, spacing, radius); copy/affordance *authoring* for these states is explicitly Phase 2 (STATE-02/03/04), not blocking this phase's STYLE-01 |
+| long-text | Tab navigation (`nav.tabs`) | ✅ covered | Same reasoning as the overflow row — 5 fixed labels ≤16 chars, no long-text risk |
+| loading / error | Tab navigation (`nav.tabs`) | ✅ covered | The nav control itself performs no network call and has no failure mode of its own — tab-switch is a synchronous `.hide` class toggle; per-tab data loading/error states are owned by each tab's content panel, not the nav |
+| empty / loading / error | Data tables (Watchlist, ticker detail, Signals) | ✅ covered | Existing empty-state copy, "Loading…" text, and `.err` message display (see Copywriting Contract) are preserved verbatim and restyled visually (card container, spacing, radius); copy/affordance *authoring* for these states is explicitly Phase 2 (STATE-02/03/04), not blocking this phase's STYLE-01 |
+| populated | Data tables | ✅ covered | Normal row rendering is existing `fetch()` → template-literal logic, unchanged this phase; only the table's container (card border/shadow/radius) is restyled |
 | partial | Data tables — tickers without computed metrics | ✅ covered | Raw `N/A`/`–` display (e.g. `index.html:230`) is preserved unchanged this phase; the graceful-placeholder swap is STATE-01, explicitly Phase 2 scope |
 | zero-one-many | Data tables | ✅ covered | Existing `rows.length === 0` empty-state branch plus natural table growth for 1..many rows — render logic unchanged, only visual container restyled |
 | overflow | Data tables — ticker symbol column | ✅ covered | Ticker symbols capped at 10 chars via `input[maxlength="10"]` (`index.html:107,156`); no overflow risk in the `.sym` column |
-| long-text / overflow | Search-result hit cards (`.hit`) and note/report cards (`.note`) — static content within a list-collection | 🧪 backstop | `chunk_text` is pre-truncated to 420 chars with an ellipsis in existing code (`index.html:292`). `note_text` and report `answer`/`citations` are **not** truncated anywhere in the current code or API contract. This phase adds card padding/border/shadow (`components.css`) around this untruncated text for the first time — verify at execution that `word-wrap:break-word`/`overflow-wrap:anywhere` is applied to `.note`/`.hit .txt` so an unusually long, unbroken note/report string wraps within the card rather than visually overflowing the new bordered/shadowed container. No functional break either way (text still renders), but a visual regression is possible without this explicit check. |
-| loading | Form submit buttons (Add ticker, Search, Save note, Apply signals filter — `interactive-control`) | ⚠ unresolved | No button disables or shows an in-flight spinner state during its `fetch()` call today (verified — none of `addSymbol`/`runSearch`/`saveNote`/`loadSignals` toggle a `disabled` attribute). Not required by any Phase 1 success criterion and out of STYLE-01's scope (it's a behavior change, not a restyle), but flagged here as an explicit planner assumption: double-click during a slow fetch is possible and unchanged from today's behavior. A low-cost additive fix (`button.disabled = true` around the `await`) is a reasonable Phase 2+ candidate, not a Phase 1 blocker. |
+| long-text | Data tables (cell content) | ⛔ not applicable | Table cell content is short (tickers, prices, percentages, dates) — no long-text overflow risk in this element, unlike the note/hit cards below |
+| empty / loading / error | Search-result hit cards (`.hit`) / note/report cards (`.note`) | ✅ covered | These cards render inside the Search/Notes/Reports tabs and share the identical empty/loading/error copy and logic already covered under Data tables above; only the card container (padding/border/shadow) is new this phase |
+| populated | Hit/note/report cards | ✅ covered | Normal card rendering unchanged; only card container restyled |
+| partial | Hit/note/report cards | ⛔ not applicable | Each card is an atomic fetch result; no partial-render state |
+| zero-one-many | Hit/note/report cards | ✅ covered | Same list-rendering logic as data tables: empty/one/many cards, unchanged this phase |
+| long-text / overflow | Hit/note/report cards — body text | 🧪 backstop | `chunk_text` is pre-truncated to 420 chars with an ellipsis in existing code (`index.html:292`). `note_text` and report `answer`/`citations` are **not** truncated anywhere in the current code or API contract. This phase adds card padding/border/shadow (`components.css`) around this untruncated text for the first time — verify at execution that `word-wrap:break-word`/`overflow-wrap:anywhere` is applied to `.note`/`.hit .txt` so an unusually long, unbroken string wraps within the card rather than visually overflowing the new bordered/shadowed container. No functional break either way (text still renders), but a visual regression is possible without this explicit check. |
+| empty | Form inputs (Add ticker, Search, Save note, Apply signals filter) | ⛔ not applicable | Standard HTML placeholder-text behavior for empty inputs; unchanged this phase, no new copy introduced |
+| loading | Form submit buttons | ⚠ unresolved | No button disables or shows an in-flight spinner state during its `fetch()` call today (verified — none of `addSymbol`/`runSearch`/`saveNote`/`loadSignals` toggle a `disabled` attribute). Not required by any Phase 1 success criterion and out of STYLE-01's scope (it's a behavior change, not a restyle), but flagged here as an explicit planner assumption: double-click during a slow fetch is possible and unchanged from today's behavior. A low-cost additive fix (`button.disabled = true` around the `await`) is a reasonable Phase 2+ candidate, not a Phase 1 blocker. |
+| error | Form submit buttons | ✅ covered | Failed submits surface via the same `.err` div pattern as data fetches (see Data tables' error row above); behavior/copy unchanged this phase |
+| partial | Form inputs | ⛔ not applicable | Standard browser form behavior; not a concern introduced by this phase's visual restyle |
+| overflow | Form inputs/textareas | ✅ covered | Standard HTML input/textarea scroll/wrap behavior; unchanged this phase |
+| long-text | Form textarea (note composer) | ✅ covered | Textarea content wraps naturally (browser default); the saved/rendered version of this same text is the note card covered by the long-text backstop row above — no separate concern for the input itself |
 
 ---
 
@@ -148,11 +167,11 @@ Not applicable — this phase uses no component registry, no shadcn, no CDN comp
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: FLAG (non-blocking — no explicit statement of primary visual anchor on first load; left as a recommendation, not required for a brownfield restyle of existing screen structure)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** APPROVED (2026-08-11) — 5/6 PASS, 1 non-blocking FLAG. UI-consideration probe run post-approval: 33 applicable considerations resolved (24 covered, 3 backstop, 1 unresolved, 5 not-applicable). Ready for planning.
