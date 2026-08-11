@@ -13,3 +13,7 @@ venv/
 *.sqlite
 *.pt
 *.bin
+
+# GSD planning/agent scaffolding — local workflow state, not app code
+.planning/
+.claude/
