@@ -30,7 +30,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. CSS and JS load from `app/static/css/` and `app/static/js/` via cache-busted URLs (`?v=`), confirmed with a hard-refresh/incognito load against the deployed Databricks App (not just local dev).
   4. No DOM ID, class, or `data-*` attribute referenced by existing lookups (`document.querySelector`/`getElementById`, tab-switch `.hide` class, `data-view`) has changed — before/after ID list diff is clean.
   5. Zero backend diff: `git diff --stat app/app.py app/lakebase.py app/massive_client.py mcp_server/ pipeline/ sql/` is empty — only `app/templates/index.html` and new files under `app/static/` changed.
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 01-01-PLAN.md — CSS design-token system + shared JS scaffolding + Watchlist tab, wired end-to-end (tracer)
+- [ ] 01-02-PLAN.md — Remaining 4 tabs ported + full contract/zero-diff verification + D-02 live deploy walkthrough
 **UI hint**: yes
 
 ### Phase 2: Missing-Data & Loading/Empty/Error States
