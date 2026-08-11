@@ -2,6 +2,7 @@
   --ink:#131a24; --soft:#4b5661; --muted:#7b858f;
   --paper:#fbfbf9; --surface:#fff; --rule:#e4e4dd;
   --up:#2e7a55; --down:#b4362c; --flat:#7b858f; --accent:#1d6fe0;
+  --err-bg: rgba(180,54,44,.05); --err-border: rgba(180,54,44,.3);
   --mono:ui-monospace,SFMono-Regular,"SF Mono","JetBrains Mono",Menlo,monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
 

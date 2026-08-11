@@ -1,4 +1,5 @@
 async function loadWatchlist() {
+  $('#wl-body').innerHTML = emptyState('Loading&hellip;');
   try {
     const rows = await api('/api/watchlist');
     if (!rows.length) {

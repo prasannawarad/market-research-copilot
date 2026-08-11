@@ -3,5 +3,5 @@ function tag(value, kind) {
 }
 function trendTag(trend) {
   const kind = trend === 'up' ? 'positive' : trend === 'down' ? 'negative' : 'neutral';
-  return tag(trend || 'n/a', kind);
+  return tag(trend || 'pending', kind);
 }
