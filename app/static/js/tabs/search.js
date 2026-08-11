@@ -1,7 +1,7 @@
 async function runSearch() {
   const query = $('#q').value.trim(), ticker = $('#q-ticker').value.trim();
   if (!query) return showErr('#q-err', 'Enter a search query.');
-  $('#q-body').innerHTML = emptyState('Embedding query and searching&hellip;');
+  $('#q-body').innerHTML = emptyState('Loading&hellip;');
   try {
     const rows = await api('/api/search', {method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({query, ticker})});

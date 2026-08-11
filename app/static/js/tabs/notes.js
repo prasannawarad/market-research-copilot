@@ -1,4 +1,5 @@
 async function loadNotes() {
+  $('#notes-body').innerHTML = emptyState('Loading&hellip;');
   try {
     const rows = await api('/api/notes');
     if (!rows.length) { $('#notes-body').innerHTML = emptyState('No notes yet.'); return; }

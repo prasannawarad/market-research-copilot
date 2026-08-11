@@ -1,4 +1,5 @@
 async function loadReports() {
+  $('#rep-body').innerHTML = emptyState('Loading&hellip;');
   try {
     const rows = await api('/api/reports');
     if (!rows.length) { $('#rep-body').innerHTML = emptyState('No agent analyses saved yet. Ask the agent a question and have it call save_analysis_report.'); return; }
