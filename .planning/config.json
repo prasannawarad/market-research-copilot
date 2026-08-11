@@ -87,7 +87,7 @@
     "source_grounding_authority": "grep"
   },
   "resolve_model_ids": "omit",
-  "runtime": "codex",
+  "runtime": "claude",
   "mode": "yolo",
   "granularity": "coarse"
 }
