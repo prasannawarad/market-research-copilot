@@ -2,7 +2,7 @@
 
 ## Overview
 
-This milestone takes the existing, live-verified Flask + vanilla-JS dashboard from a plain bordered-table look to a modern, portfolio-grade SaaS dashboard — without touching the Flask route contract, JSON shapes, Spark pipeline, or Lakebase schema. The journey starts with a foundation phase that safely relocates the current inline `<script>`/`<style>` block into `app/static/{css,js}/` (the riskiest step, per research/PITFALLS.md, because of onclick-handler and DOM-ID contracts nothing else enforces), then layers in the two "looks unfinished" fixes users will notice first (missing-data treatment, loading/empty/error states), then the one genuinely new capability (watchlist sparklines), and finishes with badge/attribution polish that only makes sense once every tab's markup is stable. Each phase ends with a live-app visual/functional check and a zero-backend-diff verification, so risk to the working, screenshot-verified deployment stays low throughout.
+This milestone takes the existing, live-verified Flask + vanilla-JS dashboard from a plain bordered-table look to a modern, portfolio-grade SaaS dashboard — without touching the Flask route contract, JSON shapes, Spark pipeline, or Lakebase schema. The journey starts with a foundation phase that safely relocates the current inline `<script>`/`<style>` block into `app/static/{css,js}/` and applies the modern SaaS-dashboard visual design (typography, color, spacing, cards) in the same pass — the riskiest step, per research/PITFALLS.md, because of onclick-handler and DOM-ID contracts nothing else enforces — then layers in the two "looks unfinished" fixes users will notice first (missing-data treatment, loading/empty/error states), then the one genuinely new capability (watchlist sparklines), and finishes with badge/attribution polish that only makes sense once every tab's markup is stable. Each phase ends with a live-app visual/functional check and a zero-backend-diff verification, so risk to the working, screenshot-verified deployment stays low throughout.
 
 ## Phases
 
@@ -12,7 +12,7 @@ This milestone takes the existing, live-verified Flask + vanilla-JS dashboard fr
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Static Asset Restructure & Design System Foundation** - Move inline CSS/JS into `app/static/{css,js}/` with zero functional regression, establishing design tokens and shared render-function scaffolding for every later phase
+- [ ] **Phase 1: Static Asset Restructure & Design System Foundation** - Move inline CSS/JS into `app/static/{css,js}/` with zero functional regression, apply the modern SaaS-dashboard visual design (typography/color/spacing/cards) across the page shell and all 5 tabs, and establish shared render-function scaffolding for every later phase
 - [ ] **Phase 2: Missing-Data & Loading/Empty/Error States** - Replace raw `N/A` with graceful placeholders and add consistent loading/empty/error feedback across all 5 tabs
 - [ ] **Phase 3: Watchlist Sparklines** - Add inline price-trend sparklines to the Watchlist tab, sourced from the existing per-ticker metrics endpoint
 - [ ] **Phase 4: Badge System & Attribution Polish** - Unify all status/sentiment/signal/similarity/author indicators into one consistent badge component, add match-strength and human-vs-agent visual distinction, and finish KPI tile context lines
@@ -20,12 +20,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Static Asset Restructure & Design System Foundation
-**Goal**: The current inline `<script>`/`<style>` block in `app/templates/index.html` is safely relocated into a modular `app/static/css/{tokens,layout,components}.css` and `app/static/js/{main.js,api.js,components/*.js,tabs/*.js}` structure, functionally identical to today, with cache-busted asset loading verified against a real deploy — establishing the foundation every subsequent phase builds on.
+**Goal**: The current inline `<script>`/`<style>` block in `app/templates/index.html` is safely relocated into a modular `app/static/css/{tokens,layout,components}.css` and `app/static/js/{main.js,api.js,components/*.js,tabs/*.js}` structure, restyled with the modern SaaS-dashboard design tokens (typography, color, spacing, card-based layout) across the page shell and all 5 tabs, functionally identical to today, with cache-busted asset loading verified against a real deploy — establishing the foundation every subsequent phase builds on.
 **Mode:** mvp
 **Depends on**: Nothing (first phase)
-**Requirements**: None directly — foundational phase preceding all v1 requirements (STATE-01 through POLISH-02), flagged by research/SUMMARY.md as necessary before any visual/feature work can land safely given the codebase's onclick-handler and DOM-ID contract risks (see research/PITFALLS.md #1, #2, #5)
+**Requirements**: STYLE-01. Also foundational for all remaining v1 requirements (STATE-01 through POLISH-02), flagged by research/SUMMARY.md as necessary before any feature work can land safely given the codebase's onclick-handler and DOM-ID contract risks (see research/PITFALLS.md #1, #2, #5)
 **Success Criteria** (what must be TRUE):
-  1. The live app renders visually identical to the current baseline (same 5 tabs, same tables, same content) immediately after the restructure — no visible regression on first load.
+  1. The live app renders with the new modern SaaS-dashboard visual design (typography scale, color palette, spacing system, card-based layout) applied consistently across the page shell and all 5 tabs — a clear visual step up from the current plain bordered-table look, while all 5 tabs, all data, and all existing content remain present and correctly labeled.
   2. Every existing interactive action still works: add/remove watchlist symbol, show ticker detail, run semantic search, load news signals, delete a note — each bound to the same `onclick`-triggered global functions or explicitly re-wired via `addEventListener` in the same change.
   3. CSS and JS load from `app/static/css/` and `app/static/js/` via cache-busted URLs (`?v=`), confirmed with a hard-refresh/incognito load against the deployed Databricks App (not just local dev).
   4. No DOM ID, class, or `data-*` attribute referenced by existing lookups (`document.querySelector`/`getElementById`, tab-switch `.hide` class, `data-view`) has changed — before/after ID list diff is clean.

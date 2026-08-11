@@ -7,6 +7,10 @@
 
 Requirements for this milestone. Each maps to roadmap phases.
 
+### Visual Design System
+
+- [ ] **STYLE-01**: User sees a modern SaaS-dashboard visual design (typography scale, color palette, spacing system, card-based layout) applied consistently across the page shell and all 5 tabs, replacing the current plain bordered-table look
+
 ### States (missing-data & loading/empty/error handling)
 
 - [ ] **STATE-01**: User sees a graceful placeholder (not raw "N/A") for tickers without computed metrics yet, in the Watchlist and detail views
@@ -54,6 +58,7 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| STYLE-01 | Phase 1 | Pending |
 | STATE-01 | Phase 2 | Pending |
 | STATE-02 | Phase 2 | Pending |
 | STATE-03 | Phase 2 | Pending |
@@ -65,11 +70,11 @@ Explicitly excluded. Documented to prevent scope creep.
 | POLISH-01 | Phase 4 | Pending |
 | POLISH-02 | Phase 4 | Pending |
 
-Note: Phase 1 (Static Asset Restructure & Design System Foundation) carries no direct requirement mapping — it is a foundational phase that must land before any v1 requirement can be built safely (see ROADMAP.md Phase 1 and research/SUMMARY.md Pitfalls 1, 2, 5).
+Note: STYLE-01 was added during Phase 1 discussion (2026-08-11) to close a gap — PROJECT.md's "visual design system" Active requirement had no explicit phase mapping in the original roadmap. Folded into Phase 1 since the restructure already touches every line of CSS.
 
 **Coverage:**
-- v1 requirements: 10 total
-- Mapped to phases: 10 (100%)
+- v1 requirements: 11 total
+- Mapped to phases: 11 (100%)
 - Unmapped: 0 ✓
 
 ---
