@@ -52,26 +52,26 @@ Explicitly excluded. Documented to prevent scope creep.
 
 ## Traceability
 
-Populated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STATE-01 | TBD | Pending |
-| STATE-02 | TBD | Pending |
-| STATE-03 | TBD | Pending |
-| STATE-04 | TBD | Pending |
-| STATE-05 | TBD | Pending |
-| VIZ-01 | TBD | Pending |
-| ATTR-01 | TBD | Pending |
-| ATTR-02 | TBD | Pending |
-| POLISH-01 | TBD | Pending |
-| POLISH-02 | TBD | Pending |
+| STATE-01 | Phase 2 | Pending |
+| STATE-02 | Phase 2 | Pending |
+| STATE-03 | Phase 2 | Pending |
+| STATE-04 | Phase 2 | Pending |
+| STATE-05 | Phase 4 | Pending |
+| VIZ-01 | Phase 3 | Pending |
+| ATTR-01 | Phase 4 | Pending |
+| ATTR-02 | Phase 4 | Pending |
+| POLISH-01 | Phase 4 | Pending |
+| POLISH-02 | Phase 4 | Pending |
+
+Note: Phase 1 (Static Asset Restructure & Design System Foundation) carries no direct requirement mapping — it is a foundational phase that must land before any v1 requirement can be built safely (see ROADMAP.md Phase 1 and research/SUMMARY.md Pitfalls 1, 2, 5).
 
 **Coverage:**
 - v1 requirements: 10 total
-- Mapped to phases: 0 (pending roadmap creation)
-- Unmapped: 10 ⚠️ (expected — roadmap not yet created)
+- Mapped to phases: 10 (100%)
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-08-10*
-*Last updated: 2026-08-10 after initial definition*
+*Last updated: 2026-08-11 after roadmap creation*
