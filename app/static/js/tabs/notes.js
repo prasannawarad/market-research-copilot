@@ -3,7 +3,7 @@ async function loadNotes() {
   try {
     const rows = await api('/api/notes');
     if (!rows.length) { $('#notes-body').innerHTML = emptyState('No notes yet.'); return; }
-    $('#notes-body').innerHTML = rows.map(r => `<div class="note">
+    $('#notes-body').innerHTML = rows.map(r => `<div class="note${r.author === 'agent' ? ' agent' : ''}">
       <div class="meta"><strong>${esc(r.ticker)}</strong> &middot;
         ${tag(r.author, esc(r.author))} &middot;
         ${String(r.created_at).slice(0,16).replace('T',' ')}
