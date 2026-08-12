@@ -6,6 +6,7 @@ async function loadWatchlist() {
     const rows = await api('/api/watchlist');
     if (!rows.length) {
       $('#wl-body').innerHTML = emptyState('No tickers yet. Add one above, then run the Spark pipeline.');
+      $('#s-metrics-ctx').textContent = '';
       return;
     }
     const headerHtml = `<th>Symbol</th><th>Trend</th><th class="num">Close</th><th class="num">Day</th>
@@ -21,8 +22,10 @@ async function loadWatchlist() {
         <td class="num"><button class="x" onclick="removeSymbol('${esc(r.symbol)}')">Remove</button></td>
       </tr>`).join('');
     $('#wl-body').innerHTML = renderTable(headerHtml, bodyRowsHtml);
+    const scored = rows.filter(r => r.trend != null).length;
+    $('#s-metrics-ctx').textContent = `${scored} of ${rows.length} tickers scored`;
     renderSparklines(rows);
-  } catch (e) { $('#wl-body').innerHTML = errState(e); }
+  } catch (e) { $('#wl-body').innerHTML = errState(e); $('#s-metrics-ctx').textContent = ''; }
 }
 
 async function renderSparklines(rows) {

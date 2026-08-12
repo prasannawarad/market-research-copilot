@@ -13,6 +13,8 @@ body{margin:0;padding:0 20px var(--space-16);background:var(--paper);color:var(-
 .strip .n{font-family:var(--mono);font-size:24px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums}
 .strip .k{font-family:var(--mono);font-size:10px;font-weight:600;line-height:1.2;letter-spacing:.12em;
   text-transform:uppercase;color:var(--muted);margin-top:4px}
+.strip .ctx{font-family:var(--mono);font-size:10px;font-weight:600;line-height:1.2;
+  color:var(--muted);opacity:.72;margin-top:var(--space-1)}
 .tabs{display:flex;gap:4px;padding:14px 0;flex-wrap:wrap}
 .tab{font-family:var(--mono);font-size:12px;font-weight:600;line-height:1.2;letter-spacing:.06em;text-transform:uppercase;
   padding:6px 12px;border:1px solid var(--rule);border-radius:var(--radius-sm);background:var(--surface);
