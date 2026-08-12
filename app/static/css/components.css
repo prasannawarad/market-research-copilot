@@ -17,6 +17,9 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 .sym{font-family:var(--mono);font-weight:600;cursor:pointer}
 .sym:hover{color:var(--accent)}
 .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--flat)}
+.spark-cell{display:flex;align-items:center;gap:var(--space-2)}
+.spark-canvas{display:block}
+.spark-empty{font-family:var(--mono);font-size:10px;font-weight:600;line-height:1.2;color:var(--muted)}
 .tag{font-family:var(--mono);font-size:10px;font-weight:600;line-height:1.2;letter-spacing:.08em;text-transform:uppercase;
   padding:2px 7px;border-radius:var(--radius-sm);border:1px solid currentColor}
 .tag.strong{color:var(--down)} .tag.material{color:var(--warn)} .tag.routine{color:var(--muted)}

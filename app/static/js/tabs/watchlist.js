@@ -1,3 +1,5 @@
+let sparkCharts = [];
+
 async function loadWatchlist() {
   $('#wl-body').innerHTML = emptyState('Loading&hellip;');
   try {
@@ -10,7 +12,7 @@ async function loadWatchlist() {
       <th class="num">Vol 20d</th><th class="num">Drawdown</th><th class="num">As of</th><th></th>`;
     const bodyRowsHtml = rows.map(r => `<tr>
         <td class="sym" onclick="showDetail('${esc(r.symbol)}')">${esc(r.symbol)}</td>
-        <td>${trendTag(r.trend)}</td>
+        <td><div class="spark-cell">${trendTag(r.trend)}<canvas class="spark-canvas" id="spark-${esc(r.symbol)}" width="72" height="26"></canvas></div></td>
         <td class="num">${r.close != null ? num(r.close) : (r.latest_price != null ? num(r.latest_price) : '&ndash;')}</td>
         <td class="num ${cls(r.daily_return)}">${pct(r.daily_return)}</td>
         <td class="num">${pct(r.volatility_20d)}</td>
@@ -19,7 +21,54 @@ async function loadWatchlist() {
         <td class="num"><button class="x" onclick="removeSymbol('${esc(r.symbol)}')">Remove</button></td>
       </tr>`).join('');
     $('#wl-body').innerHTML = renderTable(headerHtml, bodyRowsHtml);
+    renderSparklines(rows);
   } catch (e) { $('#wl-body').innerHTML = errState(e); }
+}
+
+async function renderSparklines(rows) {
+  sparkCharts.forEach(c => c.destroy());
+  sparkCharts = [];
+  const symbols = rows.map(r => r.symbol);
+  const settled = await Promise.allSettled(symbols.map(sym => api('/api/metrics/' + sym + '?days=20')));
+  const chartAvailable = !!window.Chart;
+  settled.forEach((result, i) => {
+    const canvasEl = document.getElementById('spark-' + symbols[i]);
+    if (!canvasEl) return;
+    const failed = result.status === 'rejected';
+    const closesDesc = !failed ? result.value.filter(r => r.close != null).map(r => r.close) : [];
+    const hasEnoughData = !failed && closesDesc.length >= 2;
+    if (!chartAvailable || !hasEnoughData) {
+      const titleAttr = (chartAvailable && failed) ? ' title="Failed to load price history"' : '';
+      canvasEl.outerHTML = `<span class="spark-empty"${titleAttr}>Insufficient history</span>`;
+      return;
+    }
+    const closes = closesDesc.slice().reverse();
+    const clsName = cls(closes[closes.length - 1] - closes[0]);
+    const color = getComputedStyle(document.documentElement).getPropertyValue('--' + clsName).trim();
+    const chart = new Chart(canvasEl, {
+      type: 'line',
+      data: {
+        labels: closes.map((_, idx) => idx),
+        datasets: [{
+          data: closes,
+          borderColor: color,
+          borderWidth: 1.5,
+          tension: 0,
+          fill: false,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: false,
+        maintainAspectRatio: false,
+        animation: false,
+        scales: { x: { display: false }, y: { display: false } },
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        elements: { point: { radius: 0 } }
+      }
+    });
+    sparkCharts.push(chart);
+  });
 }
 
 async function addSymbol() {
