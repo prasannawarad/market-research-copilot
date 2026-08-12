@@ -22,7 +22,12 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 .spark-empty{font-family:var(--mono);font-size:10px;font-weight:600;line-height:1.2;color:var(--muted)}
 .tag{font-family:var(--mono);font-size:10px;font-weight:600;line-height:1.2;letter-spacing:.08em;text-transform:uppercase;
   padding:2px 7px;border-radius:var(--radius-sm);border:1px solid currentColor}
-.tag.strong{color:var(--down)} .tag.material{color:var(--warn)} .tag.routine{color:var(--muted)}
+.tag.strong{border-width:1.5px;background:color-mix(in srgb, currentColor 12%, transparent)}
+.tag.material{color:var(--warn)}
+.tag.routine{color:var(--muted);border-color:transparent}
+.tag.strong[data-dir="up"]{color:var(--up)}
+.tag.strong[data-dir="down"]{color:var(--down)}
+.tag.strong[data-dir="flat"]{color:var(--flat)}
 .tag.positive{color:var(--up)} .tag.negative{color:var(--down)} .tag.neutral{color:var(--muted)}
 .tag.agent{color:var(--ai-accent)} .tag.human{color:var(--muted)}
 .hit{border-left:3px solid var(--rule);padding:10px 0 10px 14px;margin-bottom:12px}

@@ -12,7 +12,7 @@ async function loadSignals() {
         <td>${esc(r.title)}</td>
         <td class="num ${cls(r.daily_return)}">${pct(r.daily_return)}</td>
         <td class="num">${num(r.volume_zscore_20d)}</td>
-        <td>${tag(r.signal_strength, esc(r.signal_strength))}</td>
+        <td>${tag(r.signal_strength, esc(r.signal_strength), r.signal_strength === 'strong' ? {dir: cls(r.daily_return)} : null)}</td>
       </tr>`).join('');
     $('#sig-body').innerHTML = renderTable(headerHtml, bodyRowsHtml);
   } catch (e) { $('#sig-body').innerHTML = errState(e); }
