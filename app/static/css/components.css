@@ -19,9 +19,9 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabu
 .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--flat)}
 .tag{font-family:var(--mono);font-size:10px;font-weight:600;line-height:1.2;letter-spacing:.08em;text-transform:uppercase;
   padding:2px 7px;border-radius:var(--radius-sm);border:1px solid currentColor}
-.tag.strong{color:var(--down)} .tag.material{color:#b4670c} .tag.routine{color:var(--muted)}
+.tag.strong{color:var(--down)} .tag.material{color:var(--warn)} .tag.routine{color:var(--muted)}
 .tag.positive{color:var(--up)} .tag.negative{color:var(--down)} .tag.neutral{color:var(--muted)}
-.tag.agent{color:var(--accent)} .tag.human{color:var(--muted)}
+.tag.agent{color:var(--ai-accent)} .tag.human{color:var(--muted)}
 .hit{border-left:3px solid var(--rule);padding:10px 0 10px 14px;margin-bottom:12px}
 .hit .meta{font-family:var(--mono);font-size:10px;font-weight:600;line-height:1.2;color:var(--muted);margin-bottom:5px}
 .hit .txt{font-size:14px;color:var(--soft);word-wrap:break-word;overflow-wrap:anywhere}
