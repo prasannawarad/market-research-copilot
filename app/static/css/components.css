@@ -46,7 +46,7 @@ table.compact th{padding-top:8px;padding-bottom:8px}
   border-radius:var(--radius-pill);padding:7px 7px 7px 14px;font-family:var(--mono);font-size:12.5px;color:var(--soft)}
 
 .tag{font-family:var(--sans);font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-  padding:3px 8px;border-radius:var(--radius-sm);background:color-mix(in srgb, currentColor 16%, transparent);
+  padding:3px 8px;border-radius:var(--radius-sm);background:color-mix(in srgb, currentColor 10%, transparent);
   color:var(--muted)}
 .tag.material{color:var(--warn)}
 .tag.routine{color:var(--muted);background:transparent}

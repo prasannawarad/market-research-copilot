@@ -4,22 +4,23 @@ body{margin:0;padding:0 20px var(--space-16);background:var(--bg-page);color:var
 .shell{max-width:1040px;margin:0 auto}
 
 .mast{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
-  padding:28px 0 16px;border-bottom:1px solid var(--rule-subtle);flex-wrap:wrap}
-.brand{display:flex;flex-direction:column;gap:5px}
-.wordmark{font-family:var(--sans);font-size:var(--text-heading);font-weight:700;color:var(--ink)}
+  padding:40px 0 24px;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;gap:7px}
+.wordmark{font-family:var(--sans);font-size:32px;font-weight:800;letter-spacing:-.015em;color:var(--ink)}
 .who{font-family:var(--sans);font-size:12px;font-weight:400;color:var(--muted)}
 .hdr-meta{font-family:var(--sans);font-size:var(--text-caption);font-weight:600;letter-spacing:.07em;
-  text-transform:uppercase;color:var(--muted)}
+  text-transform:uppercase;color:var(--muted);background:var(--bg-hover);
+  border-radius:var(--radius-pill);padding:7px 14px 7px 12px}
 .hdr-meta .mono{font-family:var(--mono);text-transform:none;letter-spacing:0;font-size:12px;
   color:var(--soft);margin-left:7px}
 
 .strip{display:grid;grid-template-columns:repeat(4, 1fr);gap:var(--space-3);margin-top:20px}
-.strip .kpi{background:var(--bg-content);border-radius:var(--radius-md);padding:var(--space-4)}
+.strip .kpi{background:var(--bg-content);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);padding:var(--space-4)}
 .strip .n{font-family:var(--mono);font-size:var(--text-display);font-weight:700;line-height:1.1;
   font-variant-numeric:tabular-nums;color:var(--ink)}
 .strip .k{font-family:var(--sans);font-size:var(--text-caption);font-weight:600;letter-spacing:.08em;
   text-transform:uppercase;color:var(--muted);margin-top:7px}
-.strip .ctx{font-family:var(--sans);font-size:11px;font-weight:500;color:var(--muted);opacity:.85;margin-top:3px}
+.strip .ctx{font-family:var(--sans);font-size:11px;font-weight:500;color:var(--muted);margin-top:3px}
 
 .tabs{display:flex;gap:22px;padding:18px 0 0;border-bottom:1px solid var(--rule-subtle);flex-wrap:wrap}
 .tab{font-family:var(--sans);font-size:var(--text-caption);font-weight:600;letter-spacing:.06em;
