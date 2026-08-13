@@ -1,17 +1,17 @@
 input,select,textarea{font-family:var(--sans);font-size:14px;color:var(--ink);
-  background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius-sm);padding:9px 10px}
+  background:var(--raised);border:1px solid var(--rule);border-radius:var(--radius-sm);padding:9px 10px}
 input,textarea{flex:1 1 200px}
 textarea{width:100%;min-height:70px;resize:vertical;font-family:var(--sans)}
 input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:2px solid var(--accent);outline-offset:1px}
 button{font-family:var(--mono);font-size:12px;font-weight:600;line-height:1.2;letter-spacing:.1em;text-transform:uppercase;
   padding:9px 15px;border:1px solid var(--accent);border-radius:var(--radius-sm);background:var(--accent);
-  color:var(--paper);cursor:pointer}
+  color:var(--on-accent);cursor:pointer}
 button.ghost{background:transparent;color:var(--soft);border-color:var(--rule);border-radius:var(--radius-sm)}
 button.x{background:transparent;color:var(--down);border-color:var(--rule);border-radius:var(--radius-sm);padding:4px 9px}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th{font-family:var(--mono);font-size:10px;font-weight:600;line-height:1.2;letter-spacing:.1em;text-transform:uppercase;
   color:var(--muted);text-align:left;padding:8px 10px 8px 0;border-bottom:1px solid var(--rule)}
-td{padding:10px 10px 10px 0;border-bottom:1px solid #f2f2ec;vertical-align:top}
+td{padding:10px 10px 10px 0;border-bottom:1px solid var(--rule-subtle);vertical-align:top}
 td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;
   padding-right:0}
 .sym{font-family:var(--mono);font-weight:600;cursor:pointer}
