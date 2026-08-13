@@ -12,11 +12,10 @@ async function loadStats() {
   try {
     const s = await api('/api/stats');
     $('#s-bars').textContent = s.bars ?? 0;
-    $('#s-metrics').textContent = s.metrics ?? 0;
     $('#s-articles').textContent = s.articles ?? 0;
     $('#s-chunks').textContent = s.chunks ?? 0;
     $('#s-signals').textContent = s.signals ?? 0;
-    $('#s-latest').textContent = s.latest_bar ? String(s.latest_bar).slice(0,10) : '—';
+    $('#s-latest').textContent = s.latest_bar ? fmtDate(s.latest_bar) : '—';
   } catch (e) { console.error(e); }
 }
 

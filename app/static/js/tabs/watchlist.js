@@ -9,22 +9,38 @@ async function loadWatchlist() {
       $('#s-metrics-ctx').textContent = '';
       return;
     }
+    const scoredRows = rows.filter(r => r.trend != null);
+    const pendingRows = rows.filter(r => r.trend == null);
+
     const headerHtml = `<th>Symbol</th><th>Trend</th><th class="num">Close</th><th class="num">Day</th>
       <th class="num">Vol 20d</th><th class="num">Drawdown</th><th class="num">As of</th><th></th>`;
-    const bodyRowsHtml = rows.map(r => `<tr>
+    const bodyRowsHtml = scoredRows.map(r => `<tr>
         <td class="sym" onclick="showDetail('${esc(r.symbol)}')">${esc(r.symbol)}</td>
-        <td><div class="spark-cell">${trendTag(r.trend)}<canvas class="spark-canvas" id="spark-${esc(r.symbol)}" width="72" height="26"></canvas></div></td>
+        <td><div class="spark-cell"><canvas class="spark-canvas" id="spark-${esc(r.symbol)}" width="72" height="22"></canvas></div></td>
         <td class="num">${r.close != null ? num(r.close) : (r.latest_price != null ? num(r.latest_price) : '&ndash;')}</td>
         <td class="num ${cls(r.daily_return)}">${pct(r.daily_return)}</td>
         <td class="num">${pct(r.volatility_20d)}</td>
         <td class="num ${cls(r.drawdown_from_high)}">${pct(r.drawdown_from_high)}</td>
-        <td class="num" style="color:var(--muted);font-size:12px">${r.bar_date ? String(r.bar_date).slice(0,10) : '&ndash;'}</td>
+        <td class="num dim">${r.bar_date ? fmtDate(r.bar_date) : '&ndash;'}</td>
         <td class="num"><button class="x" onclick="removeSymbol('${esc(r.symbol)}')">Remove</button></td>
       </tr>`).join('');
-    $('#wl-body').innerHTML = renderTable(headerHtml, bodyRowsHtml);
-    const scored = rows.filter(r => r.trend != null).length;
-    $('#s-metrics-ctx').textContent = `${scored} of ${rows.length} tickers scored`;
-    renderSparklines(rows);
+
+    let html = scoredRows.length
+      ? renderTable(headerHtml, bodyRowsHtml, 'compact')
+      : emptyState('No scored tickers yet — run the Spark pipeline.');
+
+    if (pendingRows.length) {
+      html += `<div class="section-head sub">
+          <h2>Awaiting pipeline</h2>
+          <span class="hint">${pendingRows.length} ticker${pendingRows.length === 1 ? '' : 's'} not yet scored</span>
+        </div>
+        <div class="pending-list">${pendingRows.map(r => `<span class="pending-chip">${esc(r.symbol)}
+          <button class="x sm" onclick="removeSymbol('${esc(r.symbol)}')" aria-label="Remove ${esc(r.symbol)}">&times;</button></span>`).join('')}</div>`;
+    }
+
+    $('#wl-body').innerHTML = html;
+    $('#s-metrics-ctx').textContent = `${scoredRows.length} of ${rows.length} tickers scored`;
+    renderSparklines(scoredRows);
   } catch (e) { $('#wl-body').innerHTML = errState(e); $('#s-metrics-ctx').textContent = ''; }
 }
 
@@ -101,7 +117,7 @@ async function showDetail(ticker) {
     const headerHtml = `<th>Date</th><th class="num">Close</th><th class="num">Return</th><th class="num">MA5</th>
       <th class="num">MA20</th><th class="num">Vol 20d</th><th class="num">Vol z</th><th>Trend</th>`;
     const bodyRowsHtml = rows.map(r => `<tr>
-        <td>${String(r.bar_date).slice(0,10)}</td>
+        <td class="mono-cell">${fmtDate(r.bar_date)}</td>
         <td class="num">${num(r.close)}</td>
         <td class="num ${cls(r.daily_return)}">${pct(r.daily_return)}</td>
         <td class="num">${num(r.ma_5)}</td><td class="num">${num(r.ma_20)}</td>

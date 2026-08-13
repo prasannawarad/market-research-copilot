@@ -12,17 +12,18 @@
 <div class="shell">
 
 <header class="mast">
-  <span class="wordmark">Market Research Copilot</span>
-  <span class="who">{{ user }} &middot; lakebase + spark + agent</span>
+  <div class="brand">
+    <span class="wordmark">Market Research Copilot</span>
+    <span class="who">{{ user }} &middot; lakebase + spark + agent</span>
+  </div>
+  <div class="hdr-meta">Latest bar<span class="mono" id="s-latest">&ndash;</span></div>
 </header>
 
 <section class="strip" id="strip">
-  <div><div class="n" id="s-bars">&ndash;</div><div class="k">Price bars</div></div>
-  <div><div class="n" id="s-metrics">&ndash;</div><div class="k">Metrics</div><div class="ctx" id="s-metrics-ctx"></div></div>
-  <div><div class="n" id="s-articles">&ndash;</div><div class="k">Articles</div></div>
-  <div><div class="n" id="s-chunks">&ndash;</div><div class="k">Vectors</div></div>
-  <div><div class="n" id="s-signals">&ndash;</div><div class="k">Signals</div></div>
-  <div><div class="n" id="s-latest" style="font-size:14px">&ndash;</div><div class="k">Latest bar</div></div>
+  <div class="kpi"><div class="n" id="s-bars">&ndash;</div><div class="k">Price bars</div><div class="ctx" id="s-metrics-ctx"></div></div>
+  <div class="kpi"><div class="n" id="s-articles">&ndash;</div><div class="k">Articles</div></div>
+  <div class="kpi"><div class="n" id="s-chunks">&ndash;</div><div class="k">Vectors</div></div>
+  <div class="kpi"><div class="n" id="s-signals">&ndash;</div><div class="k">Signals</div></div>
 </section>
 
 <nav class="tabs">
@@ -43,10 +44,11 @@
     </div>
     <div id="wl-err" class="err hide"></div>
   </div>
-  <div class="panel">
-    <h2>Watchlist &mdash; metrics from the Spark pipeline</h2>
-    <div id="wl-body"><div class="empty">Loading&hellip;</div></div>
+  <div class="section-head">
+    <h2>Watchlist</h2>
+    <span class="hint">Metrics from the Spark pipeline</span>
   </div>
+  <div id="wl-body"><div class="empty">Loading&hellip;</div></div>
   <div class="panel hide" id="detail-panel">
     <h2 id="detail-title">Detail</h2>
     <div id="detail-body"></div>

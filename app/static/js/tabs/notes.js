@@ -6,8 +6,8 @@ async function loadNotes() {
     $('#notes-body').innerHTML = rows.map(r => `<div class="note${r.author === 'agent' ? ' agent' : ''}">
       <div class="meta"><strong>${esc(r.ticker)}</strong> &middot;
         ${tag(r.author, esc(r.author))} &middot;
-        ${String(r.created_at).slice(0,16).replace('T',' ')}
-        &middot; <a href="#" onclick="delNote(${r.note_id});return false" style="color:var(--down)">delete</a></div>
+        ${fmtDateTime(r.created_at)}
+        &middot; <a href="#" onclick="delNote(${r.note_id});return false" class="del">delete</a></div>
       <div>${esc(r.note_text)}</div></div>`).join('');
   } catch (e) { $('#notes-body').innerHTML = errState(e); }
 }

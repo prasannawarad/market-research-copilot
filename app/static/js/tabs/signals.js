@@ -8,7 +8,7 @@ async function loadSignals() {
       <th class="num">Vol z</th><th>Signal</th>`;
     const bodyRowsHtml = rows.map(r => `<tr>
         <td class="sym">${esc(r.ticker)}</td>
-        <td style="font-family:var(--mono);font-size:12px">${String(r.bar_date).slice(0,10)}</td>
+        <td class="mono-cell">${fmtDate(r.bar_date)}</td>
         <td>${esc(r.title)}</td>
         <td class="num ${cls(r.daily_return)}">${pct(r.daily_return)}</td>
         <td class="num">${num(r.volume_zscore_20d)}</td>
