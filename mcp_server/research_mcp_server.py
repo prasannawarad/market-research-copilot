@@ -85,10 +85,21 @@ def get_ticker_metrics(ticker: str, days: int = 30) -> str:
     z-score, drawdown from the trailing high, and trend (up/down/flat).
 
     All values are computed by the Spark pipeline, not at query time.
+
+    daily_return, volatility_20d, and drawdown_from_high are raw decimals
+    (0.0374 = 3.74%), NOT percentages — do not append a % sign to them.
+    Each has a companion _pct field (daily_return_pct, volatility_20d_pct,
+    drawdown_from_high_pct) already multiplied by 100 and rounded to 2dp —
+    use those when rendering a percentage to the user.
     """
     rows = run_query(
-        """SELECT bar_date, close, daily_return, ma_5, ma_20, volatility_20d,
-                  volume_zscore_20d, drawdown_from_high, trend
+        """SELECT bar_date, close, daily_return,
+                  ROUND((daily_return * 100)::numeric, 2) AS daily_return_pct,
+                  ma_5, ma_20, volatility_20d,
+                  ROUND((volatility_20d * 100)::numeric, 2) AS volatility_20d_pct,
+                  volume_zscore_20d, drawdown_from_high,
+                  ROUND((drawdown_from_high * 100)::numeric, 2) AS drawdown_from_high_pct,
+                  trend
            FROM ticker_metrics WHERE ticker = %s
            ORDER BY bar_date DESC LIMIT %s""",
         (ticker.upper(), days),
@@ -102,6 +113,12 @@ def compare_tickers(tickers: str, days: int = 30) -> str:
     Compare several tickers side by side over a recent window. Pass a
     comma-separated list, e.g. "AAPL,MSFT,NVDA". Returns period return,
     average annualised volatility, latest close, and current trend for each.
+
+    volatility_20d is a raw decimal (0.0374 = 3.74%) — do not append a %
+    sign to it. volatility_20d_pct is the same value already multiplied by
+    100 and rounded to 2dp; use that when rendering a percentage. Note
+    period_return is a raw summed decimal too (not covered by a _pct twin
+    here) — multiply by 100 yourself before showing it as a percentage.
     """
     symbols = [t.strip().upper() for t in tickers.split(",") if t.strip()]
     if not symbols:
@@ -120,6 +137,8 @@ def compare_tickers(tickers: str, days: int = 30) -> str:
                MAX(CASE WHEN rn = 1 THEN close END)            AS latest_close,
                MAX(CASE WHEN rn = 1 THEN trend END)            AS trend,
                MAX(CASE WHEN rn = 1 THEN volatility_20d END)   AS volatility_20d,
+               ROUND((MAX(CASE WHEN rn = 1 THEN volatility_20d END) * 100)::numeric, 2)
+                                                                AS volatility_20d_pct,
                SUM(daily_return)                               AS period_return,
                COUNT(*)                                        AS trading_days
         FROM recent GROUP BY ticker ORDER BY period_return DESC NULLS LAST
@@ -135,23 +154,32 @@ def get_news_price_signals(ticker: str = "", limit: int = 10) -> str:
     Headlines that coincided with a material same-day price move, produced by
     the Spark join between news and price action. Each row carries the daily
     return, volume z-score, and a signal_strength of strong/material/routine.
+    Rows are ordered strongest signal first, so read them top-down.
     Use this to explain *why* a stock moved.
+
+    daily_return is a raw decimal (0.0374 = 3.74%) — do not append a % sign
+    to it. daily_return_pct is the same value already multiplied by 100 and
+    rounded to 2dp; use that when rendering a percentage.
     """
+    rank = """CASE signal_strength
+                WHEN 'strong' THEN 0 WHEN 'material' THEN 1 WHEN 'routine' THEN 2 ELSE 3 END"""
     if ticker:
         rows = run_query(
-            """SELECT ticker, bar_date, title, sentiment, daily_return,
+            f"""SELECT ticker, bar_date, title, sentiment, daily_return,
+                      ROUND((daily_return * 100)::numeric, 2) AS daily_return_pct,
                       volume_zscore_20d, signal_strength
                FROM news_price_signals WHERE ticker = %s
-               ORDER BY abs_return DESC LIMIT %s""",
+               ORDER BY {rank}, abs_return DESC, bar_date DESC LIMIT %s""",
             (ticker.upper(), limit),
         )
     else:
         rows = run_query(
-            """SELECT ticker, bar_date, title, sentiment, daily_return,
+            f"""SELECT ticker, bar_date, title, sentiment, daily_return,
+                      ROUND((daily_return * 100)::numeric, 2) AS daily_return_pct,
                       volume_zscore_20d, signal_strength
                FROM news_price_signals
                WHERE signal_strength IN ('strong', 'material')
-               ORDER BY bar_date DESC, abs_return DESC LIMIT %s""",
+               ORDER BY {rank}, abs_return DESC, bar_date DESC LIMIT %s""",
             (limit,),
         )
     return _json(rows)
@@ -193,13 +221,18 @@ def flag_moves_since_last_visit(email: str = "") -> str:
     What changed on the user's watchlist since they last checked in: notable
     moves and any headlines tied to them. Also advances their last-seen
     timestamp, so this both reads and writes.
+
+    daily_return is a raw decimal (0.0374 = 3.74%) — do not append a % sign
+    to it. daily_return_pct is the same value already multiplied by 100 and
+    rounded to 2dp; use that when rendering a percentage.
     """
     who = email or DEFAULT_EMAIL
     seen = run_query("SELECT last_seen_at FROM user_visits WHERE email = %s", (who,))
     since = seen[0]["last_seen_at"] if seen else None
 
     moves = run_query(
-        """SELECT m.ticker, m.bar_date, m.close, m.daily_return, m.trend
+        """SELECT m.ticker, m.bar_date, m.close, m.daily_return,
+                  ROUND((m.daily_return * 100)::numeric, 2) AS daily_return_pct, m.trend
            FROM ticker_metrics m
            JOIN watchlist w ON w.symbol = m.ticker AND w.email = %s
            WHERE (%s::timestamptz IS NULL OR m.bar_date >= %s::timestamptz::date)
@@ -208,7 +241,8 @@ def flag_moves_since_last_visit(email: str = "") -> str:
         (who, since, since),
     )
     headlines = run_query(
-        """SELECT s.ticker, s.bar_date, s.title, s.daily_return, s.signal_strength
+        """SELECT s.ticker, s.bar_date, s.title, s.daily_return,
+                  ROUND((s.daily_return * 100)::numeric, 2) AS daily_return_pct, s.signal_strength
            FROM news_price_signals s
            JOIN watchlist w ON w.symbol = s.ticker AND w.email = %s
            WHERE s.signal_strength IN ('strong', 'material')

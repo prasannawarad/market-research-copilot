@@ -123,21 +123,23 @@ def metrics(ticker):
 @app.route("/api/signals")
 def signals():
     ticker = request.args.get("ticker", "").upper()
+    rank = """CASE signal_strength
+                WHEN 'strong' THEN 0 WHEN 'material' THEN 1 WHEN 'routine' THEN 2 ELSE 3 END"""
     if ticker:
         rows = run_query(
-            """SELECT ticker, bar_date, title, sentiment, daily_return,
+            f"""SELECT ticker, bar_date, title, sentiment, daily_return,
                       volume_zscore_20d, signal_strength
                FROM news_price_signals WHERE ticker = %s
-               ORDER BY abs_return DESC LIMIT 15""",
+               ORDER BY {rank}, abs_return DESC, bar_date DESC LIMIT 15""",
             (ticker,),
         )
     else:
         rows = run_query(
-            """SELECT ticker, bar_date, title, sentiment, daily_return,
+            f"""SELECT ticker, bar_date, title, sentiment, daily_return,
                       volume_zscore_20d, signal_strength
                FROM news_price_signals
                WHERE signal_strength IN ('strong', 'material')
-               ORDER BY bar_date DESC, abs_return DESC LIMIT 15""",
+               ORDER BY {rank}, abs_return DESC, bar_date DESC LIMIT 15""",
         )
     return jsonify(rows)
 
