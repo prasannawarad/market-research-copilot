@@ -18,3 +18,5 @@ env:
     value: "api-key"
   - name: EMBEDDING_MODEL
     value: "sentence-transformers/all-MiniLM-L6-v2"
+  - name: DEFAULT_EMAIL
+    value: "waradprasanna@gmail.com"
